@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1063621497070",
+    "project_id": "cumbitara",
+    "storage_bucket": "cumbitara.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1063621497070:android:c7c9486d0ba1457dd063ff",
+        "android_client_info": {
+          "package_name": "com.example.cumbigestor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB42tX4dRrJ_Gaoyzq7p9jlTsotwfeafyc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
