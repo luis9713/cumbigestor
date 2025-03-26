@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import '../providers/auth_provider.dart' as my;
 
 class EmailVerificationScreen extends StatefulWidget {
   const EmailVerificationScreen({super.key});
@@ -13,7 +13,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   bool _isSending = false;
 
   Future<void> _checkVerification() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = Provider.of<my.AuthProvider>(context, listen: false);
     await authProvider.user?.reload();
     if (authProvider.user!.emailVerified) {
       Navigator.pushReplacementNamed(context, '/home');
@@ -22,7 +22,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
+    final authProvider = Provider.of<my.AuthProvider>(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Verifica tu Email'),

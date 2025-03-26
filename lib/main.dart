@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
-import 'screens/home_screen.dart';
+import 'screens/admin_home_screen.dart';
+import 'screens/user_home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/email_verification_screen.dart';
 import 'firebase_options.dart';
+import 'constants.dart'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +29,7 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
+  
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -42,7 +44,9 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/reset-password': (context) => const ResetPasswordScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/email-verification': (context) => const EmailVerificationScreen(),
+        '/admin-home': (context) => const AdminHomeScreen(),
+        '/user-home': (context) => const UserHomeScreen(),
       },
       debugShowCheckedModeBanner: false,
     );
@@ -55,7 +59,7 @@ class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    
+
     if (authProvider.isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -64,7 +68,13 @@ class AuthWrapper extends StatelessWidget {
 
     if (authProvider.user == null) return const LoginScreen();
     if (!authProvider.user!.emailVerified) return const EmailVerificationScreen();
-    
-    return const HomeScreen();
+
+    // Verificar el UID del usuario autenticado contra la lista de administradores definida en constants.dart
+    final uid = authProvider.user!.uid;
+    if (adminUIDs.contains(uid)) {
+      return const AdminHomeScreen();
+    } else {
+      return const UserHomeScreen();
+    }
   }
 }
