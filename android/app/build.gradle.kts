@@ -9,12 +9,12 @@ plugins {
 
 android {
     namespace = "com.example.cumbigestor"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.cumbigestor"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
