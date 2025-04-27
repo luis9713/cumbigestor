@@ -49,12 +49,17 @@ class CustomDrawer extends StatelessWidget {
                   ? const Icon(Icons.person, size: 40)
                   : null,
             ),
+          ),ListTile(
+            leading: const Icon(Icons.list_alt),
+            title: const Text('Mis Solicitudes'),
+            onTap: () => Navigator.pushNamed(context, '/mis-solicitudes'),
           ),
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Cerrar sesión'),
             onTap: () => _confirmSignOut(context),
-          )
+          ),
+          
         ],
       ),
     );

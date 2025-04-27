@@ -1,6 +1,9 @@
+import 'dart:io';
+import 'package:cumbigestor/screens/mis_solicitudes_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'providers/auth_provider.dart';
 import 'screens/admin_home_screen.dart';
 import 'screens/user_home_screen.dart';
@@ -16,7 +19,12 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+
+  // Solicitar permisos al iniciar la app (solo en Android)
+  if (Platform.isAndroid) {
+    await _requestPermissionsOnStart();
+  }
+
   runApp(
     MultiProvider(
       providers: [
@@ -25,6 +33,25 @@ void main() async {
       child: const MyApp(),
     ),
   );
+}
+
+Future<void> _requestPermissionsOnStart() async {
+  Map<Permission, PermissionStatus> statuses = await [
+    Permission.storage, // Para Android 12 y anteriores
+    Permission.photos,  // Para Android 13+ (permisos granulares)
+    Permission.videos,
+    Permission.audio,
+  ].request();
+
+  bool allGranted = statuses.values.every((status) => status.isGranted);
+  if (!allGranted) {
+    bool isPermanentlyDenied = statuses.values.any((status) => status.isPermanentlyDenied);
+    if (isPermanentlyDenied) {
+      // No podemos mostrar un diálogo aquí porque el contexto de la app aún no está disponible.
+      // El usuario tendrá que ir a ajustes manualmente si los permisos están denegados permanentemente.
+      print("Permisos denegados permanentemente. Dirige al usuario a los ajustes de la app.");
+    }
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -47,6 +74,7 @@ class MyApp extends StatelessWidget {
         '/email-verification': (context) => const EmailVerificationScreen(),
         '/admin-home': (context) => const AdminHomeScreen(),
         '/user-home': (context) => const UserHomeScreen(),
+        '/mis-solicitudes': (context) => const MisSolicitudesScreen(),
       },
       debugShowCheckedModeBanner: false,
     );
