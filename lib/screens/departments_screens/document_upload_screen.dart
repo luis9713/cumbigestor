@@ -35,7 +35,6 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       _isUploading = true;
     });
     try {
-      // Define la ruta en Storage. En este ejemplo se guarda en una carpeta "educacion".
       final fileName = _selectedFile!.name;
       final storageRef = FirebaseStorage.instance
           .ref()
@@ -46,7 +45,6 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
 
-      // Guardar la información del archivo en la subcolección "documentos" del documento de solicitud
       await FirebaseFirestore.instance
           .collection("solicitudes_educacion")
           .doc(widget.solicitudId)

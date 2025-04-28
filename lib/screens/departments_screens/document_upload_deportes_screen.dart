@@ -39,26 +39,24 @@ class _DocumentUploadDeportesScreenState extends State<DocumentUploadDeportesScr
 
   Future<void> _uploadDocument() async {
     if (_selectedFile == null) return;
-    
-    // Verificar que el nombre del proceso no esté vacío
+
     if (_procesoController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Por favor ingresa un nombre para el proceso")),
       );
       return;
     }
-    
+
     setState(() {
       _isUploading = true;
     });
-    
+
     try {
       final String fileName = _selectedFile!.name;
       final String uid = FirebaseAuth.instance.currentUser?.uid ?? "";
       final String proceso = _procesoController.text.trim();
       final String tituloDocumento = _tituloDocumentoController.text.trim();
-      
-      // 1. Primero crear el documento principal de la solicitud
+
       DocumentReference solicitudRef = await FirebaseFirestore.instance
           .collection("solicitudes_deporte")
           .add({
@@ -67,27 +65,25 @@ class _DocumentUploadDeportesScreenState extends State<DocumentUploadDeportesScr
             "fecha": FieldValue.serverTimestamp(),
             "estado": "Pendiente",
           });
-      
-      // 2. Generar una ruta única en Storage
+
       final String storagePath = "solicitudes_deporte/${solicitudRef.id}/${DateTime.now().millisecondsSinceEpoch}_$fileName";
       Reference ref = FirebaseStorage.instance.ref().child(storagePath);
       await ref.putData(_selectedFile!.bytes!);
       String downloadUrl = await ref.getDownloadURL();
-      
-      // 3. Agregar el documento a la subcolección "documentos"
+
       await solicitudRef.collection("documentos").add({
         "docTitle": tituloDocumento,
         "fileName": fileName,
         "downloadUrl": downloadUrl,
         "fecha": FieldValue.serverTimestamp(),
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Documento subido exitosamente.")),
       );
-      
+
       Navigator.pushNamedAndRemoveUntil(context, '/user-home', (route) => false);
-      
+
       setState(() {
         _selectedFile = null;
       });
@@ -114,9 +110,9 @@ class _DocumentUploadDeportesScreenState extends State<DocumentUploadDeportesScr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 "Nombre del Proceso:",
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
               TextField(
@@ -127,9 +123,9 @@ class _DocumentUploadDeportesScreenState extends State<DocumentUploadDeportesScr
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 "Título del Documento:",
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
               TextField(
@@ -143,24 +139,17 @@ class _DocumentUploadDeportesScreenState extends State<DocumentUploadDeportesScr
               ElevatedButton(
                 onPressed: _pickFile,
                 child: const Text("Seleccionar Documento"),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
               ),
               const SizedBox(height: 20),
               if (_selectedFile != null)
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "Archivo seleccionado:",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       Text(_selectedFile!.name),
                       Text("Tamaño: ${(_selectedFile!.size / 1024).toStringAsFixed(2)} KB"),
@@ -187,10 +176,6 @@ class _DocumentUploadDeportesScreenState extends State<DocumentUploadDeportesScr
                         ],
                       )
                     : const Text("Subir Documento"),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  backgroundColor: Colors.blue,
-                ),
               ),
             ],
           ),

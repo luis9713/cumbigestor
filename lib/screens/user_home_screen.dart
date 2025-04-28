@@ -5,10 +5,9 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart' as my;
 import '../widgets/custom_drawer.dart';
 
-
 class UserHomeScreen extends StatelessWidget {
   const UserHomeScreen({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<my.AuthProvider>(context);
@@ -24,6 +23,7 @@ class UserHomeScreen extends StatelessWidget {
             Text(
               'Bienvenido, Usuario:\n $user',
               textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 20),
             Expanded(
@@ -34,18 +34,16 @@ class UserHomeScreen extends StatelessWidget {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      // Navegar a la pantalla de procesos para Educación
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const EducacionProcessScreen()),
                       );
                     },
                     child: Card(
-                      elevation: 4,
-                      child: const Center(
+                      child: Center(
                         child: Text(
                           'Educación',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: Theme.of(context).textTheme.headlineSmall,
                         ),
                       ),
                     ),
@@ -58,28 +56,25 @@ class UserHomeScreen extends StatelessWidget {
                       );
                     },
                     child: Card(
-                      elevation: 4,
-                      child: const Center(
+                      child: Center(
                         child: Text(
                           'Deporte',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: Theme.of(context).textTheme.headlineSmall,
                         ),
                       ),
                     ),
                   ),
                   GestureDetector(
                     onTap: () {
-                      // Implementa la navegación para Cultura
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Funcionalidad de Cultura en desarrollo")),
                       );
                     },
                     child: Card(
-                      elevation: 4,
-                      child: const Center(
+                      child: Center(
                         child: Text(
                           'Cultura',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: Theme.of(context).textTheme.headlineSmall,
                         ),
                       ),
                     ),

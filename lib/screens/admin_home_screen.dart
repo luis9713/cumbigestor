@@ -52,7 +52,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> with SingleTickerProv
       stream: FirebaseFirestore.instance
           .collection(solicitudesCollection)
           .where('estado', isEqualTo: estadoFiltrado)
-          .snapshots(), // Eliminamos el orderBy para evitar la necesidad de índices
+          .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
@@ -85,24 +85,22 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> with SingleTickerProv
               }
               estadoWidget = Text(
                 "Días hábiles restantes: $diasRestantes",
-                style: TextStyle(
-                  color: diasRestantes <= 3 ? Colors.red : Colors.black,
-                ),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: diasRestantes <= 3 ? Colors.red : Colors.black,
+                    ),
               );
             } else {
               // Para "Aprobado" o "Rechazado"
               estadoWidget = Text(
                 estado == "Aprobado" ? "Completado" : "Rechazado",
-                style: TextStyle(
-                  color: estado == "Aprobado" ? Colors.green : Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: estado == "Aprobado" ? Colors.green : Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
               );
             }
 
             return Card(
-              elevation: 3,
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: ListTile(
                 title: Text(proceso),
                 subtitle: Column(
@@ -110,7 +108,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> with SingleTickerProv
                   children: [
                     Text("Estado: $estado"),
                     Text("Fecha: $fecha"),
-                    estadoWidget, // Mostrar contador o mensaje según el estado
+                    estadoWidget,
                   ],
                 ),
                 onTap: () {
@@ -157,7 +155,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> with SingleTickerProv
             Tab(text: 'Rechazado'),
             Tab(text: 'Completado'),
           ],
-          
         ),
       ),
       drawer: const CustomDrawer(),
@@ -168,20 +165,16 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> with SingleTickerProv
             Text(
               'Bienvenido, Se encuentra\n En el Departamento: ${department.capitalize()}',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18),
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 20),
             Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  // Pestaña de solicitudes "Pendiente"
                   _buildSolicitudesList(solicitudesCollection, "Pendiente"),
-                  // Pestaña de solicitudes "En proceso"
                   _buildSolicitudesList(solicitudesCollection, "En proceso"),
-                  // Pestaña de solicitudes "Rechazado"
                   _buildSolicitudesList(solicitudesCollection, "Rechazado"),
-                  // Pestaña de solicitudes "Completado" (Aprobado)
                   _buildSolicitudesList(solicitudesCollection, "Aprobado"),
                 ],
               ),

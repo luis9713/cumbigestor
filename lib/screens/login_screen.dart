@@ -10,7 +10,7 @@ class LoginScreen extends StatefulWidget {
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
- 
+
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -27,12 +27,18 @@ class _LoginScreenState extends State<LoginScreen> {
   void _handleAuthError(FirebaseAuthException e) {
     String message = 'Error de autenticación';
     switch (e.code) {
-      case 'user-not-found': message = 'Usuario no registrado'; break;
-      case 'wrong-password': message = 'Contraseña incorrecta'; break;
-      case 'email-not-verified': message = 'Verifica tu email primero'; break;
+      case 'user-not-found':
+        message = 'Usuario no registrado';
+        break;
+      case 'wrong-password':
+        message = 'Contraseña incorrecta';
+        break;
+      case 'email-not-verified':
+        message = 'Verifica tu email primero';
+        break;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message)),
     );
   }
 
@@ -48,7 +54,11 @@ class _LoginScreenState extends State<LoginScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                const Icon(Icons.lock_person, size: 100, color: Colors.blue),
+                Icon(
+                  Icons.lock_person,
+                  size: 100,
+                  color: Theme.of(context).primaryColor, // Usamos el verde del tema
+                ),
                 const SizedBox(height: 30),
                 TextFormField(
                   controller: _emailController,
@@ -75,20 +85,22 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: authProvider.isLoading ? null : () async {
-                    if (_formKey.currentState!.validate()) {
-                      try {
-                        await authProvider.signInWithEmailAndPassword(
-                          _emailController.text.trim(),
-                          _passwordController.text,
-                        );
-                        Navigator.pushReplacementNamed(context, '/home');
-                      } on FirebaseAuthException catch (e) {
-                        _handleAuthError(e);
-                      }
-                    }
-                  },
-                  child: authProvider.isLoading 
+                  onPressed: authProvider.isLoading
+                      ? null
+                      : () async {
+                          if (_formKey.currentState!.validate()) {
+                            try {
+                              await authProvider.signInWithEmailAndPassword(
+                                _emailController.text.trim(),
+                                _passwordController.text,
+                              );
+                              Navigator.pushReplacementNamed(context, '/home');
+                            } on FirebaseAuthException catch (e) {
+                              _handleAuthError(e);
+                            }
+                          }
+                        },
+                  child: authProvider.isLoading
                       ? const CircularProgressIndicator()
                       : const Text('Ingresar'),
                 ),

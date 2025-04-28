@@ -26,234 +26,240 @@ class AdminSolicitudDetailScreen extends StatefulWidget {
 }
 
 class _AdminSolicitudDetailScreenState extends State<AdminSolicitudDetailScreen> {
-  String _selectedEstado = '';
-  final List<String> _estados = ['Pendiente', 'En proceso', 'Aprobado', 'Rechazado'];
-  final TextEditingController _rechazoController = TextEditingController();
   bool _isUploading = false;
   String? _respuestaDocumentoUrl;
   String? _respuestaMensaje;
   double _uploadProgress = 0.0;
+  PlatformFile? _responseFile;
+  final TextEditingController _rechazoController = TextEditingController();
 
-  Future<void> _actualizarEstado(String nuevoEstado) async {
+  @override
+  void dispose() {
+    _rechazoController.dispose();
+    super.dispose();
+  }
+
+  // Método para cambiar el estado a "En proceso"
+  Future<void> _startProcess() async {
     try {
       await FirebaseFirestore.instance
           .collection(widget.collectionName)
           .doc(widget.solicitudId)
-          .update({'estado': nuevoEstado});
+          .update({'estado': 'En proceso'});
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Estado actualizado a $nuevoEstado")),
+        const SnackBar(content: Text("Solicitud iniciada correctamente.")),
       );
-      if (nuevoEstado != "Aprobado" && nuevoEstado != "Rechazado") {
-        await FirebaseFirestore.instance
-            .collection(widget.collectionName)
-            .doc(widget.solicitudId)
-            .update({
-          'respuesta_documento_url': FieldValue.delete(),
-          'respuesta_mensaje': FieldValue.delete(),
-        });
-        setState(() {
-          _respuestaDocumentoUrl = null;
-          _respuestaMensaje = null;
-          _rechazoController.clear();
-        });
-      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al actualizar estado: $e")),
+        SnackBar(content: Text("Error al iniciar el proceso: $e")),
       );
     }
   }
 
-  Future<void> _subirDocumentoRespuesta() async {
-    try {
-      // Verificar autenticación
-      final user = FirebaseAuth.instance.currentUser;
-      print("UID del usuario autenticado: ${user?.uid}");
-      if (user == null) {
-        throw Exception("No hay usuario autenticado. Por favor, inicia sesión nuevamente.");
-      }
+  // Diálogo para aprobar y completar con carga de archivo
+  Future<void> _showApprovalDialog() async {
+    setState(() {
+      _responseFile = null;
+      _uploadProgress = 0.0;
+    });
 
-      // Validar los parámetros de la ruta
-      if (widget.collectionName.isEmpty) {
-        throw Exception("El nombre de la colección está vacío.");
-      }
-      if (widget.solicitudId.isEmpty) {
-        throw Exception("El ID de la solicitud está vacío.");
-      }
-      print("Nombre de la colección: ${widget.collectionName}");
-      print("ID de la solicitud: ${widget.solicitudId}");
-
-      // Permitir al administrador seleccionar un archivo
-      print("Abriendo selector de archivos...");
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-        withData: true, // Asegura que los bytes estén disponibles
-      );
-      print("Resultado del selector: $result");
-
-      if (result == null || result.files.single.bytes == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No se seleccionó ningún archivo o no mulai se pudieron obtener los bytes")),
-        );
-        return;
-      }
-
-      PlatformFile platformFile = result.files.single;
-      String fileName = platformFile.name;
-      print("Archivo seleccionado: ${fileName}, tamaño: ${platformFile.size} bytes");
-
-      // Limpiar el nombre del archivo para evitar caracteres problemáticos
-      fileName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
-      print("Nombre del archivo limpio: $fileName");
-
-      // Mostrar diálogo de progreso
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return StatefulBuilder(builder: (context, setStateDialog) {
-            return AlertDialog(
-              title: const Text("Subiendo documento"),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  LinearProgressIndicator(value: _uploadProgress),
-                  const SizedBox(height: 10),
-                  Text("${(_uploadProgress * 100).toStringAsFixed(0)}%"),
-                ],
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text("Aprobar y Completar Solicitud"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Por favor, sube el documento de respuesta (PDF):"),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () async {
+                  FilePickerResult? result = await FilePicker.platform.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: ['pdf'],
+                    withData: true,
+                  );
+                  if (result != null) {
+                    setDialogState(() {
+                      _responseFile = result.files.single;
+                    });
+                  }
+                },
+                child: const Text("Seleccionar Documento"),
               ),
-            );
-          });
-        },
-      );
+              if (_responseFile != null) ...[
+                const SizedBox(height: 10),
+                Text("Archivo seleccionado: ${_responseFile!.name}"),
+              ],
+              if (_isUploading) ...[
+                const SizedBox(height: 10),
+                LinearProgressIndicator(value: _uploadProgress),
+                Text("${(_uploadProgress * 100).toStringAsFixed(0)}%"),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: _responseFile == null || _isUploading
+                  ? null
+                  : () async {
+                      setState(() {
+                        _isUploading = true;
+                      });
+                      try {
+                        // Subir el archivo a Firebase Storage
+                        String fileName = _responseFile!.name;
+                        fileName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+                        String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+                        String storageBasePath = widget.collectionName == 'solicitudes_deporte'
+                            ? 'solicitudes_deporte'
+                            : 'educacion';
+                        String storagePath = '$storageBasePath/${widget.solicitudId}/respuesta_$timestamp$fileName';
+                        Reference ref = FirebaseStorage.instance.ref(storagePath);
+                        UploadTask uploadTask = ref.putData(_responseFile!.bytes!);
 
-      setState(() {
-        _isUploading = true;
-        _uploadProgress = 0.0;
-      });
+                        // Escuchar el progreso de la subida
+                        uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+                          setDialogState(() {
+                            _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
+                          });
+                        });
 
-      // Determinar la carpeta base en Firebase Storage según la colección
-      String storageBasePath;
-      if (widget.collectionName == 'solicitudes_deporte') {
-        storageBasePath = 'solicitudes_deporte';
-      } else if (widget.collectionName == 'solicitudes_educacion') {
-        storageBasePath = 'educacion';
-      } else {
-        throw Exception("Colección no soportada: ${widget.collectionName}");
-      }
+                        TaskSnapshot snapshot = await uploadTask;
+                        String downloadUrl = await snapshot.ref.getDownloadURL();
 
-      // Construir la ruta para Firebase Storage
-      String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-      String storagePath = '$storageBasePath/${widget.solicitudId}/respuesta_$timestamp$fileName';
-      print("Subiendo archivo a: $storagePath");
+                        // Guardar metadatos en Firestore
+                        await FirebaseFirestore.instance
+                            .collection(widget.collectionName)
+                            .doc(widget.solicitudId)
+                            .collection('documentos')
+                            .add({
+                          'docTitle': 'Documento de Respuesta',
+                          'fileName': "respuesta_$timestamp$fileName",
+                          'downloadUrl': downloadUrl,
+                          'fecha': FieldValue.serverTimestamp(),
+                        });
 
-      // Subir el archivo a Firebase Storage usando putData
-      Reference ref = FirebaseStorage.instance.ref(storagePath);
-      UploadTask uploadTask = ref.putData(platformFile.bytes!);
+                        // Actualizar el documento principal
+                        await FirebaseFirestore.instance
+                            .collection(widget.collectionName)
+                            .doc(widget.solicitudId)
+                            .update({
+                          'estado': 'Aprobado',
+                          'respuesta_documento_url': downloadUrl,
+                          'respuesta_mensaje': FieldValue.delete(),
+                        });
 
-      // Escuchar el progreso de la subida
-      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-        setState(() {
-          _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
-          print("Progreso de la subida: ${(_uploadProgress * 100).toStringAsFixed(2)}%");
-        });
-      }, onError: (e) {
-        print("Error en el snapshotEvents: $e");
-        Navigator.pop(context);
-        setState(() {
-          _isUploading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error durante la subida: $e")),
-        );
-      });
+                        setState(() {
+                          _respuestaDocumentoUrl = downloadUrl;
+                          _respuestaMensaje = null;
+                          _isUploading = false;
+                        });
 
-      // Esperar a que la subida se complete
-      print("Esperando a que la subida se complete...");
-      TaskSnapshot snapshot = await uploadTask;
-      print("Subida completada. Obteniendo URL de descarga...");
-      String downloadUrl = await snapshot.ref.getDownloadURL();
-      print("URL de descarga obtenida: $downloadUrl");
-
-      // Guardar los metadatos del documento de respuesta en la subcolección 'documentos'
-      print("Guardando metadatos en Firestore...");
-      await FirebaseFirestore.instance
-          .collection(widget.collectionName)
-          .doc(widget.solicitudId)
-          .collection('documentos')
-          .add({
-        'docTitle': 'Documento de Respuesta',
-        'fileName': "respuesta_$timestamp$fileName",
-        'downloadUrl': downloadUrl,
-        'fecha': FieldValue.serverTimestamp(),
-      });
-
-      // Actualizar el campo respuesta_documento_url en el documento principal
-      await FirebaseFirestore.instance
-          .collection(widget.collectionName)
-          .doc(widget.solicitudId)
-          .update({
-        'respuesta_documento_url': downloadUrl,
-        'respuesta_mensaje': FieldValue.delete(),
-      });
-
-      setState(() {
-        _respuestaDocumentoUrl = downloadUrl;
-        _respuestaMensaje = null;
-        _isUploading = false;
-      });
-
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Documento de respuesta subido exitosamente")),
-      );
-    } catch (e) {
-      print("Error completo al subir documento: $e");
-      Navigator.pop(context);
-      setState(() {
-        _isUploading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al subir documento: $e")),
-      );
-    }
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Solicitud aprobada exitosamente.")),
+                        );
+                      } catch (e) {
+                        setState(() {
+                          _isUploading = false;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Error al aprobar la solicitud: $e")),
+                        );
+                      }
+                    },
+              child: const Text("Confirmar"),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  Future<void> _enviarMensajeRechazo() async {
-    if (_rechazoController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Por favor, escribe un motivo de rechazo")),
-      );
-      return;
-    }
+  // Diálogo para rechazar con mensaje
+  Future<void> _showRejectionDialog() async {
+    _rechazoController.clear();
 
-    try {
-      await FirebaseFirestore.instance
-          .collection(widget.collectionName)
-          .doc(widget.solicitudId)
-          .update({
-        'respuesta_mensaje': _rechazoController.text.trim(),
-        'respuesta_documento_url': FieldValue.delete(),
-      });
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text("Rechazar Solicitud"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Por favor, ingresa el motivo del rechazo:"),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _rechazoController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  hintText: "Escribe el motivo del rechazo...",
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  setDialogState(() {}); // Actualiza el diálogo cuando el texto cambia
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: _rechazoController.text.trim().isEmpty || _isUploading
+                  ? null
+                  : () async {
+                      setState(() {
+                        _isUploading = true;
+                      });
+                      try {
+                        String mensaje = _rechazoController.text.trim();
+                        await FirebaseFirestore.instance
+                            .collection(widget.collectionName)
+                            .doc(widget.solicitudId)
+                            .update({
+                          'estado': 'Rechazado',
+                          'respuesta_mensaje': mensaje,
+                          'respuesta_documento_url': FieldValue.delete(),
+                        });
 
-      setState(() {
-        _respuestaMensaje = _rechazoController.text.trim();
-        _respuestaDocumentoUrl = null;
-      });
+                        setState(() {
+                          _respuestaMensaje = mensaje;
+                          _respuestaDocumentoUrl = null;
+                          _isUploading = false;
+                        });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Mensaje de rechazo enviado exitosamente")),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al enviar mensaje: $e")),
-      );
-    }
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Solicitud rechazada exitosamente.")),
+                        );
+                      } catch (e) {
+                        setState(() {
+                          _isUploading = false;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Error al rechazar la solicitud: $e")),
+                        );
+                      }
+                    },
+              child: const Text("Confirmar"),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  Future<void> _downloadFile(
-      BuildContext context, String downloadUrl, String fileName) async {
+  Future<void> _downloadFile(BuildContext context, String downloadUrl, String fileName) async {
     await _checkAndRequestPermissions(context);
     try {
       final directory = await _getDownloadDirectory();
@@ -338,8 +344,7 @@ class _AdminSolicitudDetailScreenState extends State<AdminSolicitudDetailScreen>
     return filePath;
   }
 
-  Future<void> _performDownload(
-      BuildContext context, String downloadUrl, String downloadPath) async {
+  Future<void> _performDownload(BuildContext context, String downloadUrl, String downloadPath) async {
     double progress = 0.0;
     late void Function(void Function()) setStateDialog;
     showDialog(
@@ -411,7 +416,7 @@ class _AdminSolicitudDetailScreenState extends State<AdminSolicitudDetailScreen>
 
   void _showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message)),
     );
   }
 
@@ -446,9 +451,9 @@ class _AdminSolicitudDetailScreenState extends State<AdminSolicitudDetailScreen>
               const Text("No hay documentos subidos."),
               const SizedBox(height: 10),
               Text("ID de solicitud: ${widget.solicitudId}",
-                  style: const TextStyle(color: Colors.grey)),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
               Text("Colección: ${widget.collectionName}",
-                  style: const TextStyle(color: Colors.grey)),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
             ],
           );
         }
@@ -476,8 +481,6 @@ class _AdminSolicitudDetailScreenState extends State<AdminSolicitudDetailScreen>
 
             if (downloadUrl.isEmpty) {
               return Card(
-                elevation: 3,
-                margin: const EdgeInsets.symmetric(vertical: 8),
                 child: ListTile(
                   title: Text(docTitle),
                   subtitle: Column(
@@ -492,8 +495,6 @@ class _AdminSolicitudDetailScreenState extends State<AdminSolicitudDetailScreen>
             }
 
             return Card(
-              elevation: 3,
-              margin: const EdgeInsets.symmetric(vertical: 8),
               child: ListTile(
                 title: Text(docTitle),
                 subtitle: Text(fileName),
@@ -535,19 +536,19 @@ class _AdminSolicitudDetailScreenState extends State<AdminSolicitudDetailScreen>
       appBar: AppBar(
         title: const Text("Administrar Solicitud"),
       ),
-      body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
             .collection(widget.collectionName)
             .doc(widget.solicitudId)
-            .get(),
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text("Error: ${snapshot.error}"));
           }
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || !snapshot.data!.exists) {
+          if (!snapshot.data!.exists) {
             return const Center(child: Text("Solicitud no encontrada"));
           }
 
@@ -558,7 +559,6 @@ class _AdminSolicitudDetailScreenState extends State<AdminSolicitudDetailScreen>
               ? "${fechaTimestamp.toDate().day}/${fechaTimestamp.toDate().month}/${fechaTimestamp.toDate().year} ${fechaTimestamp.toDate().hour}:${fechaTimestamp.toDate().minute.toString().padLeft(2, '0')}"
               : "Sin fecha";
           String estado = solicitudData["estado"] ?? "Pendiente";
-          _selectedEstado = estado;
 
           _respuestaDocumentoUrl = solicitudData["respuesta_documento_url"];
           _respuestaMensaje = solicitudData["respuesta_mensaje"];
@@ -572,20 +572,18 @@ class _AdminSolicitudDetailScreenState extends State<AdminSolicitudDetailScreen>
             }
             estadoWidget = Text(
               "Días hábiles restantes para responder: $diasRestantes",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: diasRestantes <= 3 ? Colors.red : Colors.black,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: diasRestantes <= 3 ? Colors.red : Colors.black,
+                  ),
             );
           } else {
             estadoWidget = Text(
               estado == "Aprobado" ? "Completado" : "Rechazado",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: estado == "Aprobado" ? Colors.green : Colors.red,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: estado == "Aprobado" ? Colors.green : Colors.red,
+                  ),
             );
           }
 
@@ -596,67 +594,50 @@ class _AdminSolicitudDetailScreenState extends State<AdminSolicitudDetailScreen>
               children: [
                 Text(
                   "Proceso: $proceso",
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 8),
                 Text("Fecha: $fecha"),
                 const SizedBox(height: 8),
-                estadoWidget,
+                Text("Estado: $estado"),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Text(
-                      "Estado: ",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    DropdownButton<String>(
-                      value: _selectedEstado,
-                      items: _estados.map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            _selectedEstado = newValue;
-                          });
-                          _actualizarEstado(newValue);
-                        }
-                      },
-                    ),
-                  ],
-                ),
+                estadoWidget,
                 const SizedBox(height: 16),
-                if (_selectedEstado == "Aprobado" && _respuestaDocumentoUrl == null)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Subir documento de respuesta:",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: _isUploading ? null : _subirDocumentoRespuesta,
-                        child: _isUploading
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text("Seleccionar documento (PDF)"),
-                      ),
-                    ],
+                // Botones según el estado
+                if (estado == "Pendiente")
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: _startProcess,
+                      child: const Text("Iniciar Proceso"),
+                    ),
                   ),
+                if (estado == "En proceso")
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          onPressed: _showApprovalDialog,
+                          child: const Text("Aprobar y Completar"),
+                        ),
+                        ElevatedButton(
+                          onPressed: _showRejectionDialog,
+                          child: const Text("Rechazar"),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 16),
                 if (_respuestaDocumentoUrl != null)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "Documento de respuesta subido:",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       const SizedBox(height: 8),
                       Card(
-                        elevation: 3,
                         child: ListTile(
                           title: const Text("Documento de respuesta"),
                           trailing: Row(
@@ -687,49 +668,25 @@ class _AdminSolicitudDetailScreenState extends State<AdminSolicitudDetailScreen>
                       ),
                     ],
                   ),
-                if (_selectedEstado == "Rechazado" && _respuestaMensaje == null)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Motivo del rechazo:",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _rechazoController,
-                        maxLines: 3,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: "Escribe el motivo del rechazo...",
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: _enviarMensajeRechazo,
-                        child: const Text("Enviar mensaje de rechazo"),
-                      ),
-                    ],
-                  ),
                 if (_respuestaMensaje != null)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "Motivo del rechazo:",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         _respuestaMensaje!,
-                        style: const TextStyle(fontSize: 16),
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
                   ),
                 const Divider(height: 32),
-                const Text(
+                Text(
                   "Documentos subidos:",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 8),
                 _buildDocumentsSection(context),

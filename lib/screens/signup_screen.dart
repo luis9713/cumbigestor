@@ -34,7 +34,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
           key: _formKey,
           child: Column(
             children: [
-              const Icon(Icons.person_add, size: 100, color: Colors.blue),
+              Icon(
+                Icons.person_add,
+                size: 100,
+                color: Theme.of(context).primaryColor, // Usamos el verde del tema
+              ),
               const SizedBox(height: 30),
               TextFormField(
                 controller: _emailController,
@@ -54,24 +58,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   labelText: 'Contraseña',
                   prefixIcon: Icon(Icons.lock),
                 ),
-              ), // Cierre correcto del TextFormField
+              ),
               const SizedBox(height: 30),
               ElevatedButton(
-                onPressed: authProvider.isLoading ? null : () async {
-                  if (_formKey.currentState!.validate()) {
-                    try {
-                      await authProvider.signUpWithEmailAndPassword(
-                        _emailController.text.trim(),
-                        _passwordController.text,
-                      );
-                      Navigator.pushNamed(context, '/login');
-                    } on FirebaseAuthException catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.message ?? 'Error de registro')),
-                      );
-                    }
-                  }
-                },
+                onPressed: authProvider.isLoading
+                    ? null
+                    : () async {
+                        if (_formKey.currentState!.validate()) {
+                          try {
+                            await authProvider.signUpWithEmailAndPassword(
+                              _emailController.text.trim(),
+                              _passwordController.text,
+                            );
+                            Navigator.pushNamed(context, '/login');
+                          } on FirebaseAuthException catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(e.message ?? 'Error de registro')),
+                            );
+                          }
+                        }
+                      },
                 child: authProvider.isLoading
                     ? const CircularProgressIndicator()
                     : const Text('Registrarse'),

@@ -12,7 +12,8 @@ import 'screens/signup_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/email_verification_screen.dart';
 import 'firebase_options.dart';
-import 'constants.dart'; 
+import 'constants.dart';
+import 'theme.dart'; // Importamos el tema personalizado
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,10 +62,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Gestión Documental - Cumbitara',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
+      theme: cumbitaraTheme(), // Aplicamos el tema personalizado
       initialRoute: '/',
       routes: {
         '/': (context) => const AuthWrapper(),

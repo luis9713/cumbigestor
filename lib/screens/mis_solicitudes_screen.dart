@@ -75,6 +75,7 @@ class MisSolicitudesScreen extends StatelessWidget {
           return Center(child: Text("No tienes solicitudes registradas en $type."));
         }
 
+        // Ordenar los documentos en el cliente por fecha descendente
         final sortedDocs = List.from(docs);
         sortedDocs.sort((a, b) {
           final aData = a.data() as Map<String, dynamic>;
@@ -102,7 +103,8 @@ class MisSolicitudesScreen extends StatelessWidget {
             String fechaFormateada = "Sin fecha";
             if (fechaTimestamp != null) {
               final fecha = (fechaTimestamp as Timestamp).toDate();
-              fechaFormateada = "${fecha.day}/${fecha.month}/${fecha.year} ${fecha.hour}:${fecha.minute.toString().padLeft(2, '0')}";
+              fechaFormateada =
+                  "${fecha.day}/${fecha.month}/${fecha.year} ${fecha.hour}:${fecha.minute.toString().padLeft(2, '0')}";
             }
 
             // Calcular días hábiles restantes solo si el estado es "Pendiente" o "En proceso"
@@ -115,23 +117,21 @@ class MisSolicitudesScreen extends StatelessWidget {
               }
               estadoWidget = Text(
                 "Días hábiles restantes: $diasRestantes",
-                style: TextStyle(
-                  color: diasRestantes <= 3 ? Colors.red : Colors.black,
-                ),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: diasRestantes <= 3 ? Colors.red : Colors.black,
+                    ),
               );
             } else {
               estadoWidget = Text(
                 estado == "Aprobado" ? "Completado" : "Rechazado",
-                style: TextStyle(
-                  color: estado == "Aprobado" ? Colors.green : Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: estado == "Aprobado" ? Colors.green : Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
               );
             }
 
             return Card(
-              elevation: 3,
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: ListTile(
                 title: Text(proceso),
                 subtitle: Column(
@@ -139,7 +139,7 @@ class MisSolicitudesScreen extends StatelessWidget {
                   children: [
                     Text("Estado: $estado"),
                     Text("Fecha: $fechaFormateada"),
-                    estadoWidget, // Mostrar contador o mensaje según el estado
+                    estadoWidget,
                   ],
                 ),
                 onTap: () {

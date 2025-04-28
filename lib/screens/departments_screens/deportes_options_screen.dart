@@ -18,7 +18,6 @@ class DeportesOptionsScreen extends StatelessWidget {
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           children: [
-            // Card para "Generar Solicitud"
             GestureDetector(
               onTap: () {
                 Navigator.push(
@@ -29,17 +28,15 @@ class DeportesOptionsScreen extends StatelessWidget {
                 );
               },
               child: Card(
-                elevation: 4,
-                child: const Center(
+                child: Center(
                   child: Text(
                     "Generar Solicitud",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.headlineSmall,
                     textAlign: TextAlign.center,
                   ),
                 ),
               ),
             ),
-            // Card para "Realizar Solicitud"
             GestureDetector(
               onTap: () {
                 Navigator.push(
@@ -50,11 +47,10 @@ class DeportesOptionsScreen extends StatelessWidget {
                 );
               },
               child: Card(
-                elevation: 4,
-                child: const Center(
+                child: Center(
                   child: Text(
                     "Realizar Solicitud",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.headlineSmall,
                     textAlign: TextAlign.center,
                   ),
                 ),

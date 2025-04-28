@@ -174,7 +174,7 @@ class SolicitudDetailViewScreen extends StatelessWidget {
 
   void _showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message)),
     );
   }
 
@@ -208,8 +208,10 @@ class SolicitudDetailViewScreen extends StatelessWidget {
             children: [
               const Text("No hay documentos subidos."),
               const SizedBox(height: 10),
-              Text("ID de solicitud: $solicitudId", style: const TextStyle(color: Colors.grey)),
-              Text("Colección: $collectionName", style: const TextStyle(color: Colors.grey)),
+              Text("ID de solicitud: $solicitudId",
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
+              Text("Colección: $collectionName",
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
               ElevatedButton(
                 onPressed: () {},
                 child: const Text("Subir documento adicional"),
@@ -241,8 +243,6 @@ class SolicitudDetailViewScreen extends StatelessWidget {
 
             if (downloadUrl.isEmpty) {
               return Card(
-                elevation: 3,
-                margin: const EdgeInsets.symmetric(vertical: 8),
                 child: ListTile(
                   title: Text(docTitle),
                   subtitle: Column(
@@ -257,8 +257,6 @@ class SolicitudDetailViewScreen extends StatelessWidget {
             }
 
             return Card(
-              elevation: 3,
-              margin: const EdgeInsets.symmetric(vertical: 8),
               child: ListTile(
                 title: Text(docTitle),
                 subtitle: Text(fileName),
@@ -334,20 +332,18 @@ class SolicitudDetailViewScreen extends StatelessWidget {
             }
             estadoWidget = Text(
               "Días hábiles restantes para respuesta: $diasRestantes",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: diasRestantes <= 3 ? Colors.red : Colors.black,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: diasRestantes <= 3 ? Colors.red : Colors.black,
+                  ),
             );
           } else {
             estadoWidget = Text(
               estado == "Aprobado" ? "Completado" : "Rechazado",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: estado == "Aprobado" ? Colors.green : Colors.red,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: estado == "Aprobado" ? Colors.green : Colors.red,
+                  ),
             );
           }
 
@@ -358,8 +354,7 @@ class SolicitudDetailViewScreen extends StatelessWidget {
               children: [
                 Text(
                   "Proceso: $proceso",
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 8),
                 Text("Fecha: $fecha"),
@@ -368,18 +363,16 @@ class SolicitudDetailViewScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text("Estado: $estado"),
                 const SizedBox(height: 16),
-                // Mostrar la respuesta del administrador
                 if (estado == "Aprobado" && respuestaDocumentoUrl != null)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "Documento de respuesta:",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       const SizedBox(height: 8),
                       Card(
-                        elevation: 3,
                         child: ListTile(
                           title: const Text("Documento de respuesta"),
                           trailing: Row(
@@ -414,21 +407,21 @@ class SolicitudDetailViewScreen extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "Motivo del rechazo:",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         respuestaMensaje,
-                        style: const TextStyle(fontSize: 16),
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
                   ),
                 const Divider(height: 32),
-                const Text(
+                Text(
                   "Documentos subidos:",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 8),
                 _buildDocumentsSection(context),

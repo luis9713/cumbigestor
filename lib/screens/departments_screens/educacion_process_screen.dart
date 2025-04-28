@@ -1,4 +1,3 @@
-// educacion_process_screen.dart
 import 'package:flutter/material.dart';
 import 'solicitud_detail_screen.dart';
 
@@ -24,27 +23,21 @@ class EducacionProcessScreen extends StatelessWidget {
           children: procesos.map((proceso) {
             return GestureDetector(
               onTap: () {
-                // Navegar a la pantalla de detalle de la solicitud sin crear el documento
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        SolicitudDetailScreen(proceso: proceso),
+                    builder: (context) => SolicitudDetailScreen(proceso: proceso),
                   ),
                 );
               },
               child: Card(
-                elevation: 4,
                 child: Center(
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
                       proceso,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
                   ),
                 ),

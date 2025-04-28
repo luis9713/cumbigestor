@@ -20,7 +20,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     _emailController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<my.AuthProvider>(context);
@@ -32,7 +32,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           key: _formKey,
           child: Column(
             children: [
-              const Icon(Icons.lock_reset, size: 100, color: Colors.blue),
+              Icon(
+                Icons.lock_reset,
+                size: 100,
+                color: Theme.of(context).primaryColor, // Usamos el verde del tema
+              ),
               const SizedBox(height: 30),
               TextFormField(
                 controller: _emailController,
@@ -45,21 +49,23 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               ),
               const SizedBox(height: 30),
               ElevatedButton(
-                onPressed: authProvider.isLoading ? null : () async {
-                  if (_formKey.currentState!.validate()) {
-                    try {
-                      await authProvider.resetPassword(_emailController.text.trim());
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Correo de recuperación enviado'))
-                      );
-                      Navigator.pop(context);
-                    } on FirebaseAuthException catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.message ?? 'Error al enviar correo'))
-                      );
-                    }
-                  }
-                },
+                onPressed: authProvider.isLoading
+                    ? null
+                    : () async {
+                        if (_formKey.currentState!.validate()) {
+                          try {
+                            await authProvider.resetPassword(_emailController.text.trim());
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Correo de recuperación enviado')),
+                            );
+                            Navigator.pop(context);
+                          } on FirebaseAuthException catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(e.message ?? 'Error al enviar correo')),
+                            );
+                          }
+                        }
+                      },
                 child: authProvider.isLoading
                     ? const CircularProgressIndicator()
                     : const Text('Enviar enlace'),
