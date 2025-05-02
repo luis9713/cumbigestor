@@ -51,6 +51,8 @@ dependencies:
   pdf: ^3.11.3
   signature: ^6.0.0
   device_info_plus: ^11.4.0
+  flutter_native_splash: ^2.4.6
+  flutter_launcher_icons: ^0.14.3
 
 
 
@@ -106,3 +108,20 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/images/splash.png
+  android: true
+  ios: true
+  web: false
+  fullscreen: true
+  
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/icono.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/images/icono.png"
+  
