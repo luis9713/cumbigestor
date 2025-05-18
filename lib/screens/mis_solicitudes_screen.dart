@@ -2,12 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'solicitud_detail_view_screen.dart';
-import '../utils/utils.dart'; // Importar las funciones auxiliares
+import '../utils/utils.dart';
 
 class MisSolicitudesScreen extends StatelessWidget {
   const MisSolicitudesScreen({super.key});
 
-  // Función para obtener el nombre de la colección según el tipo.
   String _getCollection(String type) {
     switch (type) {
       case "Educación":
@@ -75,7 +74,6 @@ class MisSolicitudesScreen extends StatelessWidget {
           return Center(child: Text("No tienes solicitudes registradas en $type."));
         }
 
-        // Ordenar los documentos en el cliente por fecha descendente
         final sortedDocs = List.from(docs);
         sortedDocs.sort((a, b) {
           final aData = a.data() as Map<String, dynamic>;
@@ -107,7 +105,6 @@ class MisSolicitudesScreen extends StatelessWidget {
                   "${fecha.day}/${fecha.month}/${fecha.year} ${fecha.hour}:${fecha.minute.toString().padLeft(2, '0')}";
             }
 
-            // Calcular días hábiles restantes solo si el estado es "Pendiente" o "En proceso"
             Widget estadoWidget;
             if (estado == "Pendiente" || estado == "En proceso") {
               int diasRestantes = 0;

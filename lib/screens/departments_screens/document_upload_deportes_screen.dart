@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class DocumentUploadDeportesScreen extends StatefulWidget {
   const DocumentUploadDeportesScreen({Key? key}) : super(key: key);
@@ -77,6 +78,15 @@ class _DocumentUploadDeportesScreenState extends State<DocumentUploadDeportesScr
         "downloadUrl": downloadUrl,
         "fecha": FieldValue.serverTimestamp(),
       });
+
+      // Actualizar el token FCM del usuario en la colección 'users'
+      String? fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .set({'fcmToken': fcmToken}, SetOptions(merge: true));
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Documento subido exitosamente.")),

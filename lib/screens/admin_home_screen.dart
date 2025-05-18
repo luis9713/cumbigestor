@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/custom_drawer.dart';
-import '../utils/utils.dart'; // Importar las funciones auxiliares
+import '../utils/utils.dart';
 
 const Map<String, String> adminDepartmentMapping = {
   'A3zwu7ksPzZQ0BLoYHSO46jUFy03': 'educacion',
-  '1XqbIxjcLThw8L8nAlEeFQtV2pP2': 'deporte',
+  'QCYtuiLFcnTAYLSPtUAolgVCQBg2': 'deporte',
   'uid_admin_cultura': 'cultura',
 };
 
@@ -75,7 +75,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> with SingleTickerProv
                 ? (fechaTimestamp as Timestamp).toDate().toLocal().toString()
                 : "Sin fecha";
 
-            // Calcular días hábiles restantes solo si el estado es "Pendiente" o "En proceso"
             Widget estadoWidget;
             if (estado == "Pendiente" || estado == "En proceso") {
               int diasRestantes = 0;
@@ -90,7 +89,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> with SingleTickerProv
                     ),
               );
             } else {
-              // Para "Aprobado" o "Rechazado"
               estadoWidget = Text(
                 estado == "Aprobado" ? "Completado" : "Rechazado",
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(

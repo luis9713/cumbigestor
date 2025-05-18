@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cumbigestor/constants.dart';
 
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -14,6 +17,9 @@ class AuthProvider extends ChangeNotifier {
   AuthProvider() {
     _auth.authStateChanges().listen((User? user) {
       _user = user;
+      if (user != null) {
+        _updateUserData(user);
+      }
       notifyListeners();
     });
   }
@@ -21,6 +27,21 @@ class AuthProvider extends ChangeNotifier {
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
+  }
+
+  Future<void> _updateUserData(User user) async {
+    try {
+      String? fcmToken = await FirebaseMessaging.instance.getToken();
+
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'fcmToken': fcmToken ?? '',
+        'name': user.displayName ?? 'Usuario',
+        'email': user.email ?? '',
+        'isAdmin': adminUIDs.contains(user.uid),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print('Error al actualizar datos del usuario: $e');
+    }
   }
 
   Future<void> sendEmailVerification() async {
@@ -64,6 +85,10 @@ class AuthProvider extends ChangeNotifier {
           message: 'Por favor verifica tu correo electrónico',
         );
       }
+      _user = userCredential.user;
+      if (_user != null) {
+        await _updateUserData(_user!);
+      }
     } on FirebaseAuthException catch (e) {
       throw FirebaseAuthException(code: e.code, message: e.message);
     } finally {
@@ -84,7 +109,11 @@ class AuthProvider extends ChangeNotifier {
         idToken: googleAuth.idToken,
       );
 
-      await _auth.signInWithCredential(credential);
+      final userCredential = await _auth.signInWithCredential(credential);
+      _user = userCredential.user;
+      if (_user != null) {
+        await _updateUserData(_user!);
+      }
     } on FirebaseAuthException catch (e) {
       throw FirebaseAuthException(code: e.code, message: e.message);
     } finally {

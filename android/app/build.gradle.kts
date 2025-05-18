@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.cumbigestor"
-        minSdk = flutter.minSdkVersion
+        minSdk = 31
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
