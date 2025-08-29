@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:cumbigestor/screens/mis_solicitudes_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -32,8 +33,8 @@ void main() async {
   // Configurar manejador de notificaciones en background
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // Solicitar permisos al iniciar la app (solo en Android)
-  if (Platform.isAndroid) {
+  // Solicitar permisos al iniciar la app (solo en Android, no en web)
+  if (!kIsWeb && Platform.isAndroid) {
     await _requestPermissionsOnStart();
   }
 

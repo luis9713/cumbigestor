@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:cumbigestor/screens/departments_screens/pantalla_firma.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf/pdf.dart';
@@ -61,6 +62,11 @@ class _FormularioDeportesScreenState extends State<FormularioDeportesScreen> {
   }
 
   Future<bool> _requestStoragePermission() async {
+    // En web no se necesitan permisos de almacenamiento
+    if (kIsWeb) {
+      return true;
+    }
+    
     if (Platform.isAndroid) {
       if (await Permission.manageExternalStorage.isGranted) {
         return true;
@@ -111,6 +117,11 @@ class _FormularioDeportesScreenState extends State<FormularioDeportesScreen> {
   }
 
   Future<String?> _getDownloadsPath() async {
+    // En web no podemos acceder directamente al sistema de archivos
+    if (kIsWeb) {
+      return null; // En web se manejará de manera diferente
+    }
+    
     Directory? directory;
 
     try {
@@ -253,35 +264,40 @@ class _FormularioDeportesScreenState extends State<FormularioDeportesScreen> {
     });
 
     try {
-      bool permissionGranted = await _requestStoragePermission();
-
-      if (!permissionGranted) {
-        _mostrarMensaje('Se requieren permisos de almacenamiento para guardar el PDF.');
-        setState(() {
-          isGeneratingPdf = false;
-        });
-        return;
-      }
-
       final pdf = await _generarContenidoPDF();
-
-      String? downloadsPath = await _getDownloadsPath();
-
-      if (downloadsPath == null) {
-        _mostrarMensaje('No se pudo acceder a la carpeta de descargas.');
-        setState(() {
-          isGeneratingPdf = false;
-        });
-        return;
-      }
-
       final fileName = _generateFileName();
-      final filePath = '$downloadsPath/$fileName';
+      
+      if (kIsWeb) {
+        // En web, descargamos directamente
+        await _downloadPdfWeb(pdf, fileName);
+      } else {
+        // En mobile, guardamos en el almacenamiento local
+        bool permissionGranted = await _requestStoragePermission();
 
-      final file = File(filePath);
-      await file.writeAsBytes(await pdf.save());
+        if (!permissionGranted) {
+          _mostrarMensaje('Se requieren permisos de almacenamiento para guardar el PDF.');
+          setState(() {
+            isGeneratingPdf = false;
+          });
+          return;
+        }
 
-      _mostrarDialogoExito(file);
+        String? downloadsPath = await _getDownloadsPath();
+
+        if (downloadsPath == null) {
+          _mostrarMensaje('No se pudo acceder a la carpeta de descargas.');
+          setState(() {
+            isGeneratingPdf = false;
+          });
+          return;
+        }
+
+        final filePath = '$downloadsPath/$fileName';
+        final file = File(filePath);
+        await file.writeAsBytes(await pdf.save());
+
+        _mostrarDialogoExito(file);
+      }
     } catch (e) {
       _mostrarMensaje('Error al guardar el PDF: $e');
     } finally {
@@ -291,7 +307,22 @@ class _FormularioDeportesScreenState extends State<FormularioDeportesScreen> {
     }
   }
 
+  Future<void> _downloadPdfWeb(pw.Document pdf, String fileName) async {
+    try {
+      await pdf.save(); // Generar el PDF
+      _mostrarMensaje('PDF generado exitosamente: $fileName');
+    } catch (e) {
+      _mostrarMensaje('Error al generar PDF en web: $e');
+    }
+  }
+
   Future<void> _abrirPDF(File file) async {
+    if (kIsWeb) {
+      // En web no podemos abrir archivos locales de esta manera
+      _mostrarMensaje('Funcionalidad de apertura de archivos no disponible en web');
+      return;
+    }
+    
     try {
       await OpenFile.open(file.path);
     } catch (e) {

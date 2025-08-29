@@ -16,7 +16,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     final authProvider = Provider.of<my.AuthProvider>(context, listen: false);
     await authProvider.user?.reload();
     if (authProvider.user!.emailVerified) {
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/');
     }
   }
 

@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 _emailController.text.trim(),
                                 _passwordController.text,
                               );
-                              Navigator.pushReplacementNamed(context, '/home');
+                              Navigator.pushReplacementNamed(context, '/');
                             } on FirebaseAuthException catch (e) {
                               _handleAuthError(e);
                             }

@@ -7,7 +7,9 @@ import 'package:cumbigestor/constants.dart';
 
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: kIsWeb ? '1063621497070-n5egg5vh7n7gme890pj4br5o79u34dt3.apps.googleusercontent.com' : null,
+  );
   User? _user;
   bool _isLoading = false;
 
