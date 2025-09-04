@@ -122,12 +122,15 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
 flutter_native_splash:
-  color: "#ffffff"
+  color: "#4CAF50"  # Verde para coincidir con tu tema
   image: assets/images/splash.png
   android: true
   ios: true
   web: false
   fullscreen: true
+  android_12:
+    icon_background_color: "#4CAF50"  # Verde para Android 12
+    image: assets/images/splash.png
   
   
 
