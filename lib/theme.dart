@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 
-// Paleta de colores moderna y elegante inspirada en Material Design 3
-const Color primaryBlue = Color(0xFF1976D2);        // Azul primario elegante
-const Color lightBlue = Color(0xFF42A5F5);          // Azul claro para acentos
-const Color darkBlue = Color(0xFF0D47A1);           // Azul oscuro para contraste
-const Color accentOrange = Color(0xFFFF8A65);       // Naranja suave para acentos
-const Color backgroundLight = Color(0xFFF8F9FA);    // Fondo muy claro y limpio
+// Paleta de colores inspirada en diseños modernos con tonos verdes vibrantes
+const Color primaryGreen = Color(0xFF4CAF50);       // Verde principal vibrante
+const Color lightGreen = Color(0xFF81C784);         // Verde claro para acentos
+const Color darkGreen = Color(0xFF2E7D32);          // Verde oscuro para contraste
+const Color accentGreen = Color(0xFF66BB6A);        // Verde medio para elementos activos
+const Color backgroundLight = Color(0xFFF1F8E9);    // Fondo muy claro con toque verde
+const Color backgroundGreen = Color(0xFFE8F5E8);    // Fondo verde muy suave
 const Color surfaceWhite = Color(0xFFFFFFFF);       // Blanco puro para superficies
-const Color textPrimary = Color(0xFF212121);        // Gris oscuro para texto principal
-const Color textSecondary = Color(0xFF757575);      // Gris medio para texto secundario
+const Color cardGreen = Color(0xFFF8FBF8);          // Fondo de tarjetas con toque verde
+const Color textPrimary = Color(0xFF1B5E20);        // Verde oscuro para texto principal
+const Color textSecondary = Color(0xFF4A6741);      // Verde gris para texto secundario
+const Color textLight = Color(0xFF81C784);          // Verde claro para texto secundario
 const Color successGreen = Color(0xFF4CAF50);       // Verde para éxito
-const Color warningAmber = Color(0xFFFFC107);       // Ámbar para advertencias
-const Color errorRed = Color(0xFFF44336);           // Rojo para errores
+const Color warningAmber = Color(0xFFFFB74D);       // Naranja suave para advertencias
+const Color errorRed = Color(0xFFE57373);           // Rojo suave para errores
+const Color iconGreen = Color(0xFF388E3C);          // Verde para iconos
+const Color accentOrange = Color(0xFFFF8A65);       // Naranja como color de acento
 
 ThemeData cumbitaraTheme() {
   return ThemeData(
@@ -19,15 +24,15 @@ ThemeData cumbitaraTheme() {
     useMaterial3: true,
     
     // Colores principales
-    primaryColor: primaryBlue,
+    primaryColor: primaryGreen,
     scaffoldBackgroundColor: backgroundLight,
     
     colorScheme: ColorScheme.light(
       // Colores primarios
-      primary: primaryBlue,
+      primary: primaryGreen,
       onPrimary: Colors.white,
-      primaryContainer: lightBlue.withOpacity(0.1),
-      onPrimaryContainer: darkBlue,
+      primaryContainer: lightGreen.withOpacity(0.2),
+      onPrimaryContainer: darkGreen,
       
       // Colores secundarios
       secondary: accentOrange,
@@ -38,7 +43,7 @@ ThemeData cumbitaraTheme() {
       // Superficies
       surface: surfaceWhite,
       onSurface: textPrimary,
-      surfaceContainerHighest: backgroundLight,
+      surfaceContainerHighest: backgroundGreen,
       
       // Estados
       error: errorRed,
@@ -49,8 +54,8 @@ ThemeData cumbitaraTheme() {
       onBackground: textPrimary,
       
       // Colores de contorno
-      outline: Color(0xFFE0E0E0),
-      outlineVariant: Color(0xFFF5F5F5),
+      outline: lightGreen.withOpacity(0.3),
+      outlineVariant: backgroundGreen,
     ),
 
     // Estilo de los AppBars - Más moderno y limpio
@@ -58,18 +63,18 @@ ThemeData cumbitaraTheme() {
       backgroundColor: surfaceWhite,
       foregroundColor: textPrimary,
       elevation: 0,
-      surfaceTintColor: primaryBlue.withOpacity(0.05),
+      surfaceTintColor: primaryGreen.withOpacity(0.05),
       titleTextStyle: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: textPrimary,
       ),
-      iconTheme: IconThemeData(color: primaryBlue),
+      iconTheme: IconThemeData(color: primaryGreen),
     ),
 
     // Estilo de las pestañas - Más elegante
     tabBarTheme: TabBarThemeData(
-      labelColor: primaryBlue,
+      labelColor: primaryGreen,
       unselectedLabelColor: textSecondary,
       labelStyle: TextStyle(
         fontSize: 14,
@@ -81,7 +86,7 @@ ThemeData cumbitaraTheme() {
       ),
       indicator: UnderlineTabIndicator(
         borderSide: BorderSide(
-          color: primaryBlue,
+          color: primaryGreen,
           width: 3,
         ),
       ),
@@ -91,7 +96,7 @@ ThemeData cumbitaraTheme() {
     // Estilo de los botones elevados - Más atractivo y moderno
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: primaryBlue,
+        backgroundColor: primaryGreen,
         foregroundColor: Colors.white,
         textStyle: TextStyle(
           fontWeight: FontWeight.w600,
@@ -102,14 +107,14 @@ ThemeData cumbitaraTheme() {
           borderRadius: BorderRadius.circular(16),
         ),
         elevation: 2,
-        shadowColor: primaryBlue.withOpacity(0.3),
+        shadowColor: primaryGreen.withOpacity(0.3),
       ),
     ),
 
     // Estilo de botones de texto
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: primaryBlue,
+        foregroundColor: primaryGreen,
         textStyle: TextStyle(
           fontWeight: FontWeight.w600,
           fontSize: 14,
@@ -123,13 +128,13 @@ ThemeData cumbitaraTheme() {
 
     // Estilo de las tarjetas - Diseño más moderno
     cardTheme: CardThemeData(
-      color: surfaceWhite,
-      elevation: 4,
-      shadowColor: primaryBlue.withOpacity(0.1),
-      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      color: cardGreen,
+      elevation: 6,
+      shadowColor: primaryGreen.withOpacity(0.15),
+      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide.none,
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: lightGreen.withOpacity(0.2), width: 1),
       ),
     ),
 
@@ -149,7 +154,7 @@ ThemeData cumbitaraTheme() {
       headlineSmall: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w600,
-        color: primaryBlue,
+        color: primaryGreen,
       ),
       
       // Títulos
@@ -161,7 +166,7 @@ ThemeData cumbitaraTheme() {
       titleMedium: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w500,
-        color: textPrimary,
+        color: primaryGreen,
       ),
       
       // Cuerpo del texto
@@ -195,21 +200,21 @@ ThemeData cumbitaraTheme() {
     // Estilo de los campos de texto - Más elegante
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: backgroundLight,
+      fillColor: backgroundGreen,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Color(0xFFE0E0E0)),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: lightGreen.withOpacity(0.3)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Color(0xFFE0E0E0)),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: lightGreen.withOpacity(0.3)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: primaryBlue, width: 2),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: primaryGreen, width: 2),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide(color: errorRed),
       ),
       labelStyle: TextStyle(color: textSecondary),
@@ -219,21 +224,22 @@ ThemeData cumbitaraTheme() {
 
     // Estilo del SnackBar - Más moderno
     snackBarTheme: SnackBarThemeData(
-      backgroundColor: textPrimary,
+      backgroundColor: darkGreen,
       contentTextStyle: TextStyle(color: Colors.white),
-      actionTextColor: accentOrange,
+      actionTextColor: lightGreen,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
       ),
     ),
 
-    // Estilo del Drawer - Más limpio
+    // Estilo del Drawer - Más moderno y alineado con el nuevo diseño
     drawerTheme: DrawerThemeData(
       backgroundColor: surfaceWhite,
-      elevation: 8,
-      shadowColor: primaryBlue.withOpacity(0.1),
-      shape: RoundedRectangleBorder(
+      elevation: 12,
+      shadowColor: primaryGreen.withOpacity(0.15),
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topRight: Radius.circular(0),
           bottomRight: Radius.circular(0),
@@ -244,19 +250,19 @@ ThemeData cumbitaraTheme() {
     // Estilo de los ListTile
     listTileTheme: ListTileThemeData(
       contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      iconColor: primaryBlue,
+      iconColor: primaryGreen,
       textColor: textPrimary,
       tileColor: Colors.transparent,
-      selectedColor: primaryBlue,
-      selectedTileColor: primaryBlue.withOpacity(0.1),
+      selectedColor: primaryGreen,
+      selectedTileColor: primaryGreen.withOpacity(0.1),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
       ),
     ),
 
     // Estilo de los FloatingActionButton
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: primaryBlue,
+      backgroundColor: primaryGreen,
       foregroundColor: Colors.white,
       elevation: 6,
       shape: RoundedRectangleBorder(
@@ -266,21 +272,21 @@ ThemeData cumbitaraTheme() {
 
     // Estilo de los Dividers
     dividerTheme: DividerThemeData(
-      color: Color(0xFFE0E0E0),
+      color: lightGreen.withOpacity(0.3),
       thickness: 1,
       space: 1,
     ),
 
     // Estilo de los Chips
     chipTheme: ChipThemeData(
-      backgroundColor: backgroundLight,
-      selectedColor: primaryBlue.withOpacity(0.2),
+      backgroundColor: backgroundGreen,
+      selectedColor: primaryGreen.withOpacity(0.2),
       labelStyle: TextStyle(color: textPrimary),
       secondaryLabelStyle: TextStyle(color: Colors.white),
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: Color(0xFFE0E0E0)),
+        side: BorderSide(color: lightGreen.withOpacity(0.3)),
       ),
     ),
   );

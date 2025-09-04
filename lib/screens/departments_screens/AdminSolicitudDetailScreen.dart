@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cumbigestor/screens/pdf_viewer_screen.dart';
 import 'package:cumbigestor/utils/utils.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cumbigestor/utils/web_download.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
@@ -260,6 +262,11 @@ class _AdminSolicitudDetailScreenState extends State<AdminSolicitudDetailScreen>
   }
 
   Future<void> _downloadFile(BuildContext context, String downloadUrl, String fileName) async {
+    if (kIsWeb) {
+      await _downloadFileWeb(context, downloadUrl, fileName);
+      return;
+    }
+    
     await _checkAndRequestPermissions(context);
     try {
       final directory = await _getDownloadDirectory();
@@ -272,6 +279,45 @@ class _AdminSolicitudDetailScreenState extends State<AdminSolicitudDetailScreen>
     } catch (e) {
       _showErrorSnackBar(context, 'Error durante la descarga: ${e.toString()}');
       print('Detalle del error de descarga: $e');
+    }
+  }
+
+  Future<void> _downloadFileWeb(
+      BuildContext context, String downloadUrl, String fileName) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text("Descargando archivo..."),
+            ],
+          ),
+        ),
+      );
+
+      final response = await Dio().get(
+        downloadUrl,
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      final bytes = response.data as List<int>;
+      downloadFile(Uint8List.fromList(bytes), fileName);
+
+      Navigator.of(context).pop(); // Close loading dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Archivo descargado: $fileName'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      Navigator.of(context).pop(); // Close loading dialog
+      _showErrorSnackBar(context, 'Error durante la descarga: ${e.toString()}');
+      print('Detalle del error de descarga web: $e');
     }
   }
 
@@ -613,16 +659,52 @@ class _AdminSolicitudDetailScreenState extends State<AdminSolicitudDetailScreen>
                   ),
                 if (estado == "En proceso")
                   Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    child: Column(
                       children: [
-                        ElevatedButton(
-                          onPressed: _showApprovalDialog,
-                          child: const Text("Aprobar y Completar"),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _showApprovalDialog,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4CAF50),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 3,
+                            ),
+                            child: const Text(
+                              "Aprobar y Completar",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
                         ),
-                        ElevatedButton(
-                          onPressed: _showRejectionDialog,
-                          child: const Text("Rechazar"),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _showRejectionDialog,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF44336),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 3,
+                            ),
+                            child: const Text(
+                              "Rechazar",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),

@@ -1,7 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:cumbigestor/utils/web_download.dart';
 import 'pdf_viewer_screen.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
@@ -20,6 +23,11 @@ class SolicitudDetailViewScreen extends StatelessWidget {
 
   Future<void> _downloadFile(
       BuildContext context, String downloadUrl, String fileName) async {
+    if (kIsWeb) {
+      await _downloadFileWeb(context, downloadUrl, fileName);
+      return;
+    }
+    
     await _checkAndRequestPermissions(context);
     try {
       final directory = await _getDownloadDirectory();
@@ -32,6 +40,45 @@ class SolicitudDetailViewScreen extends StatelessWidget {
     } catch (e) {
       _showErrorSnackBar(context, 'Error durante la descarga: ${e.toString()}');
       print('Detalle del error de descarga: $e');
+    }
+  }
+
+  Future<void> _downloadFileWeb(
+      BuildContext context, String downloadUrl, String fileName) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text("Descargando archivo..."),
+            ],
+          ),
+        ),
+      );
+
+      final response = await Dio().get(
+        downloadUrl,
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      final bytes = response.data as List<int>;
+      downloadFile(Uint8List.fromList(bytes), fileName);
+
+      Navigator.of(context).pop(); // Close loading dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Archivo descargado: $fileName'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      Navigator.of(context).pop(); // Close loading dialog
+      _showErrorSnackBar(context, 'Error durante la descarga: ${e.toString()}');
+      print('Detalle del error de descarga web: $e');
     }
   }
 

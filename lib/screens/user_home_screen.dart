@@ -1,5 +1,6 @@
-import 'package:cumbigestor/screens/departments_screens/educacion_process_screen.dart';
-import 'package:cumbigestor/screens/departments_screens/deportes_options_screen.dart';
+import 'package:cumbigestor/screens/departments/educacion/educacion_process_screen.dart';
+import 'package:cumbigestor/screens/departments/deportes/deportes_options_screen.dart';
+import 'package:cumbigestor/screens/departments/cultura/cultura_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart' as my;
@@ -11,78 +12,191 @@ class UserHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<my.AuthProvider>(context);
-    final user = authProvider.user?.displayName ?? 'No User';
+    final user = authProvider.user?.displayName ?? 'Usuario';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Inicio')),
+      backgroundColor: Theme.of(context).colorScheme.background,
+      appBar: AppBar(
+        title: const Text('CumbiGestor'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        centerTitle: true,
+      ),
       drawer: const CustomDrawer(),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Bienvenido, Usuario:\n $user',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
+            // Saludo de bienvenida con diseño moderno
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const EducacionProcessScreen()),
-                      );
-                    },
-                    child: Card(
-                      child: Center(
-                        child: Text(
-                          'Educación',
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                      ),
+                  Icon(
+                    Icons.waving_hand,
+                    size: 40,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '¡Hola, $user!',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const DeportesOptionsScreen()),
-                      );
-                    },
-                    child: Card(
-                      child: Center(
-                        child: Text(
-                          'Deporte',
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Funcionalidad de Cultura en desarrollo")),
-                      );
-                    },
-                    child: Card(
-                      child: Center(
-                        child: Text(
-                          'Cultura',
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                      ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Bienvenido a tu gestor municipal',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.9),
                     ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 30),
+            Text(
+              'Departamentos',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onBackground,
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Grid de departamentos con diseño moderno
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.2, // Aumentado de 1.1 a 1.2 para más altura
+              children: [
+                _buildDepartmentCard(
+                  context: context,
+                  title: 'Educación',
+                  icon: Icons.school_rounded,
+                  gradient: [const Color(0xFF4CAF50), const Color(0xFF66BB6A)],
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const EducacionProcessScreen()),
+                  ),
+                ),
+                _buildDepartmentCard(
+                  context: context,
+                  title: 'Deportes',
+                  icon: Icons.sports_soccer_rounded,
+                  gradient: [const Color(0xFF2E7D32), const Color(0xFF4CAF50)],
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const DeportesOptionsScreen()),
+                  ),
+                ),
+                _buildDepartmentCard(
+                  context: context,
+                  title: 'Cultura',
+                  icon: Icons.palette_rounded,
+                  gradient: [const Color(0xFF66BB6A), const Color(0xFF81C784)],
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CulturaScreen()),
+                  ),
+                ),
+                _buildDepartmentCard(
+                  context: context,
+                  title: 'Próximamente',
+                  icon: Icons.construction_rounded,
+                  gradient: [const Color(0xFFBDBDBD), const Color(0xFF9E9E9E)],
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('¡Próximamente disponible!')),
+                  ),
+                ),
+              ],
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDepartmentCard({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required List<Color> gradient,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradient,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: gradient[0].withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Card(
+          elevation: 0,
+          color: Colors.transparent,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 40,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      height: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

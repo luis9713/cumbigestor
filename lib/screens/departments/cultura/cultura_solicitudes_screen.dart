@@ -5,66 +5,34 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
-final Map<String, List<Map<String, String>>> requisitosEducacion = {
-  "Actas de Pago del Transporte Escolar": [
+final Map<String, List<Map<String, String>>> requisitosCulturaSolicitudes = {
+  "Solicitudes de Procesos Culturales": [
     {
-      "title": "Acta de pago",
-      "description": "Acta de pago con firmas del conductor y la institución educativa."
+      "title": "Propuesta técnica",
+      "description": "Mínimo 10 páginas con objetivos, metodología, cronograma y presupuesto. Incluir análisis de impacto social y económico."
     },
     {
-      "title": "Registro de rutas",
-      "description": "Registro de rutas asignadas y horarios cumplidos (adjunto al acta)."
-    },
-  ],
-  "Subsidios para Educación Superior": [
-    {
-      "title": "Certificado de notas",
-      "description": "Debe incluir el sello de la institución educativa y el promedio semestral."
+      "title": "Acta de validación",
+      "description": "Firmada por al menos tres miembros de la junta comunal para garantizar alineación con necesidades reales."
     },
     {
-      "title": "Comprobante de matrícula",
-      "description": "Factura o recibo oficial emitido por la universidad o instituto."
-    },
-    {
-      "title": "Certificación bancaria",
-      "description": "Actualizada a no más de 30 días, indicando la cuenta activa del estudiante."
-    },
-    {
-      "title": "Formato de renovación",
-      "description": "Documento estandarizado que incluye declaración jurada de necesidad económica."
-    },
-  ],
-  "Solicitudes Educativas": [
-    {
-      "title": "Solicitud institucional",
-      "description": "Redactada en papel membreteado, con firma del rector o representante legal."
-    },
-    {
-      "title": "Informes técnicos",
-      "description": "En casos de infraestructura, se adjuntan fotos o diagnósticos de daños."
-    },
-    {
-      "title": "Respuesta oficial",
-      "description": "Incluye sello húmedo y firma de la Coordinadora, Diana Marcela Gustin."
+      "title": "Presupuesto desglosado",
+      "description": "Incluir costos detallados de materiales, honorarios y logística."
     },
   ],
 };
 
-class SolicitudDetailScreen extends StatefulWidget {
-  final String proceso;
-
-  const SolicitudDetailScreen({
-    Key? key,
-    required this.proceso,
-  }) : super(key: key);
+class CulturaSolicitudesScreen extends StatefulWidget {
+  const CulturaSolicitudesScreen({Key? key}) : super(key: key);
 
   @override
-  _SolicitudDetailScreenState createState() => _SolicitudDetailScreenState();
+  _CulturaSolicitudesScreenState createState() => _CulturaSolicitudesScreenState();
 }
 
-class _SolicitudDetailScreenState extends State<SolicitudDetailScreen> {
+class _CulturaSolicitudesScreenState extends State<CulturaSolicitudesScreen> {
   final Map<String, Map<String, dynamic>> _uploadedFiles = {};
   bool _isUploading = false;
+  final String proceso = "Solicitudes de Procesos Culturales";
 
   Future<void> _pickAndUploadFile(String docTitle) async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -82,7 +50,7 @@ class _SolicitudDetailScreenState extends State<SolicitudDetailScreen> {
     try {
       String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
       String extension = file.name.split('.').last;
-      String storagePath = "educacion/${docTitle}_$timestamp.$extension";
+      String storagePath = "cultura_solicitudes/${docTitle}_$timestamp.$extension";
 
       final ref = FirebaseStorage.instance.ref().child(storagePath);
       await ref.putData(file.bytes!);
@@ -111,17 +79,27 @@ class _SolicitudDetailScreenState extends State<SolicitudDetailScreen> {
   }
 
   Future<void> _guardarSolicitud() async {
+    if (_uploadedFiles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Debe subir al menos un documento para continuar.")),
+      );
+      return;
+    }
+
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid ?? "";
       DocumentReference docRef = FirebaseFirestore.instance
-          .collection("solicitudes_educacion")
+          .collection("solicitudes_cultura")
           .doc();
+      
       await docRef.set({
-        "proceso": widget.proceso,
+        "proceso": proceso,
         "uid": uid,
         "fecha": FieldValue.serverTimestamp(),
         "estado": "Pendiente",
+        "tipo": "solicitud"
       });
+
       for (var entry in _uploadedFiles.values) {
         await docRef.collection("documentos").add({
           "docTitle": entry["docTitle"],
@@ -131,7 +109,7 @@ class _SolicitudDetailScreenState extends State<SolicitudDetailScreen> {
         });
       }
 
-      // Actualizar el token FCM del usuario en la colección 'users'
+      // Actualizar el token FCM del usuario
       String? fcmToken = await FirebaseMessaging.instance.getToken();
       if (fcmToken != null) {
         await FirebaseFirestore.instance
@@ -154,16 +132,29 @@ class _SolicitudDetailScreenState extends State<SolicitudDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> requisitos = requisitosEducacion[widget.proceso] ?? [];
+    final List<Map<String, String>> requisitos = requisitosCulturaSolicitudes[proceso] ?? [];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Solicitud: ${widget.proceso}"),
+        title: const Text("Solicitudes de Procesos Culturales"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              "Artistas, colectivos o juntas de acción comunal pueden solicitar apoyo para actividades como festivales, talleres de danza o exposiciones artesanales.",
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "Proceso de evaluación: 20 días hábiles",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
             Expanded(
               child: ListView.builder(
                 itemCount: requisitos.length,
@@ -178,26 +169,46 @@ class _SolicitudDetailScreenState extends State<SolicitudDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            title,
-                            style: Theme.of(context).textTheme.titleMedium,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              if (isUploaded)
+                                Icon(
+                                  Icons.check_circle,
+                                  color: Colors.green,
+                                ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(description),
                           const SizedBox(height: 8),
+                          Text(
+                            description,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               if (isUploaded)
-                                Icon(
-                                  Icons.check_circle,
-                                  color: Theme.of(context).primaryColor,
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: Text(
+                                    _uploadedFiles[title]?["fileName"] ?? "",
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.green,
+                                    ),
+                                  ),
                                 ),
-                              const SizedBox(width: 8),
                               ElevatedButton.icon(
                                 onPressed: _isUploading ? null : () => _pickAndUploadFile(title),
-                                icon: const Icon(Icons.upload_file),
-                                label: const Text("Subir documento"),
+                                icon: Icon(isUploaded ? Icons.refresh : Icons.upload_file),
+                                label: Text(isUploaded ? "Reemplazar" : "Subir documento"),
                               ),
                             ],
                           ),
@@ -209,9 +220,16 @@ class _SolicitudDetailScreenState extends State<SolicitudDetailScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _isUploading ? null : _guardarSolicitud,
-              child: const Text("Guardar Solicitud"),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isUploading ? null : _guardarSolicitud,
+                icon: const Icon(Icons.save),
+                label: const Text("Guardar Solicitud"),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.all(16),
+                ),
+              ),
             ),
           ],
         ),
