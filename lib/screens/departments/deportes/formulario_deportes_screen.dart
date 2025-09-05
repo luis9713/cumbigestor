@@ -4,12 +4,17 @@ import 'package:cumbigestor/screens/departments/deportes/pantalla_firma.dart';
 import 'package:cumbigestor/utils/web_download.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../../services/offline_manager.dart';
+import '../../../widgets/connection_indicator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FormularioDeportesScreen extends StatefulWidget {
   const FormularioDeportesScreen({super.key});
@@ -259,6 +264,139 @@ class _FormularioDeportesScreenState extends State<FormularioDeportesScreen> {
     return pdf;
   }
 
+  Future<void> _submitSolicitud() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _mostrarMensaje('Usuario no autenticado');
+      return;
+    }
+
+    final offlineManager = Provider.of<OfflineManager>(context, listen: false);
+    
+    // Check connection status first
+    if (!offlineManager.isOnline) {
+      // Offline mode - save locally without loading state
+      await _saveOfflineSolicitudAndGeneratePDF(user.uid);
+      _mostrarMensajeOffline();
+      return;
+    }
+
+    // Online mode - show loading
+    setState(() {
+      isGeneratingPdf = true;
+    });
+
+    try {
+      // Prepare solicitud data
+      final solicitudData = {
+        'nombre': nombreController.text,
+        'apellido': apellidoController.text,
+        'cedula': cedulaController.text,
+        'direccion': direccionController.text,
+        'telefono': telefonoController.text,
+        'email': emailController.text,
+        'asunto': asuntoController.text,
+        'descripcion': descripcionController.text,
+        'fechaSolicitud': fechaSolicitud,
+        'fechaCreacion': DateTime.now(),
+        'userId': user.uid,
+        'estado': 'Pendiente',
+        'departamento': 'deportes',
+        'proceso': 'Solicitud al Departamento de Deportes',
+        'tieneFirma': tieneFirma,
+      };
+
+      // Submit online
+      await _submitToFirebase(solicitudData);
+      _mostrarMensaje('Solicitud enviada exitosamente');
+
+      // Generate PDF after submission
+      await _guardarPDFEnDescargas();
+      
+      // Clear form and navigate back
+      _clearForm();
+      Navigator.pushReplacementNamed(context, '/user-home');
+      
+    } catch (e) {
+      _mostrarMensaje('Error al enviar la solicitud: $e');
+    } finally {
+      setState(() {
+        isGeneratingPdf = false;
+      });
+    }
+  }
+
+  Future<void> _saveOfflineSolicitudAndGeneratePDF(String uid) async {
+    try {
+      final offlineManager = Provider.of<OfflineManager>(context, listen: false);
+      
+      // Create offline solicitud
+      await offlineManager.createSolicitudOffline(
+        usuarioId: uid,
+        motivo: asuntoController.text,
+        descripcion: '${descripcionController.text}\n\nDatos adicionales:\nNombre: ${nombreController.text} ${apellidoController.text}\nCédula: ${cedulaController.text}\nDirección: ${direccionController.text}\nTeléfono: ${telefonoController.text}\nEmail: ${emailController.text}\nDepartamento: deportes',
+      );
+
+      // Generate PDF
+      await _guardarPDFEnDescargas();
+      
+      // Clear form
+      _clearForm();
+      
+    } catch (e) {
+      _mostrarMensaje('Error al guardar la solicitud offline: $e');
+    }
+  }
+
+  void _mostrarMensajeOffline() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          icon: const Icon(Icons.wifi_off, color: Colors.orange, size: 48),
+          title: const Text('Sin Conexión'),
+          content: const Text('Tu solicitud se ha guardado localmente y se enviará automáticamente cuando tengas conexión a internet.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pushReplacementNamed(context, '/user-home');
+              },
+              child: const Text('Entendido'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _submitToFirebase(Map<String, dynamic> data) async {
+    await FirebaseFirestore.instance
+        .collection('solicitudes_deportes')
+        .add(data);
+  }
+
+  void _clearForm() {
+    nombreController.clear();
+    apellidoController.clear();
+    cedulaController.clear();
+    direccionController.clear();
+    telefonoController.clear();
+    emailController.clear();
+    asuntoController.clear();
+    descripcionController.clear();
+    setState(() {
+      fechaSolicitud = DateTime.now();
+      firmaImagenBytes = null;
+      tieneFirma = false;
+    });
+  }
+
   Future<void> _guardarPDFEnDescargas() async {
     setState(() {
       isGeneratingPdf = true;
@@ -384,15 +522,32 @@ class _FormularioDeportesScreenState extends State<FormularioDeportesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Crear Solicitud para Alcaldía'),
+        actions: [
+          Consumer<OfflineManager>(
+            builder: (context, offlineManager, child) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ConnectionStatusIcon(),
+              );
+            },
+          ),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      body: Column(
+        children: [
+          // Indicador de conexión
+          const ConnectionIndicator(showWhenOnline: false),
+          
+          // Contenido del formulario
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                 Text(
                   'Datos Personales',
                   style: Theme.of(context).textTheme.titleLarge,
@@ -574,22 +729,44 @@ class _FormularioDeportesScreenState extends State<FormularioDeportesScreen> {
                   ),
                 const SizedBox(height: 30),
                 Center(
-                  child: isGeneratingPdf
-                      ? const CircularProgressIndicator()
-                      : ElevatedButton.icon(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              _guardarPDFEnDescargas();
-                            }
+                  child: Column(
+                    children: [
+                      isGeneratingPdf
+                          ? const CircularProgressIndicator()
+                          : ElevatedButton.icon(
+                              onPressed: () {
+                                if (_formKey.currentState!.validate()) {
+                                  _submitSolicitud();
+                                }
+                              },
+                              icon: const Icon(Icons.send),
+                              label: const Text('Enviar Solicitud y Generar PDF'),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              ),
+                            ),
+                      const SizedBox(height: 10),
+                      if (isGeneratingPdf)
+                        Consumer<OfflineManager>(
+                          builder: (context, offlineManager, child) {
+                            return Text(
+                              offlineManager.isOnline 
+                                  ? 'Enviando solicitud...' 
+                                  : 'Guardando solicitud localmente...',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            );
                           },
-                          icon: const Icon(Icons.picture_as_pdf),
-                          label: const Text('Generar y Guardar PDF'),
                         ),
+                    ],
+                  ),
                 ),
-              ],
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

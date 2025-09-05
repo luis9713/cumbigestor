@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'providers/auth_provider.dart';
+import 'services/offline_manager.dart';
 import 'screens/admin_home_screen.dart';
 import 'screens/user_home_screen.dart';
 import 'screens/login_screen.dart';
@@ -42,6 +43,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => OfflineManager()),
       ],
       child: const MyApp(),
     ),
@@ -79,6 +81,12 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _initializeFCM();
+    _initializeOfflineManager();
+  }
+
+  Future<void> _initializeOfflineManager() async {
+    final offlineManager = Provider.of<OfflineManager>(context, listen: false);
+    await offlineManager.initialize();
   }
 
   Future<void> _initializeFCM() async {

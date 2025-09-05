@@ -8,68 +8,8 @@ import '../widgets/custom_drawer.dart';
 import '../services/offline_manager.dart';
 import '../widgets/connection_indicator.dart';
 
-class UserHomeScreen extends StatefulWidget {
+class UserHomeScreen extends StatelessWidget {
   const UserHomeScreen({super.key});
-
-  @override
-  State<UserHomeScreen> createState() => _UserHomeScreenState();
-}
-
-class _UserHomeScreenState extends State<UserHomeScreen> {
-  @override
-  void initState() {
-    super.initState();
-    // Configure sync completed callback
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final offlineManager = Provider.of<OfflineManager>(context, listen: false);
-      offlineManager.setSyncCompletedCallback(_showSyncCompletedMessage);
-      offlineManager.setReconnectedCallback(_showReconnectedMessage);
-    });
-  }
-
-  @override
-  void dispose() {
-    final offlineManager = Provider.of<OfflineManager>(context, listen: false);
-    offlineManager.removeSyncCompletedCallback();
-    offlineManager.removeReconnectedCallback();
-    super.dispose();
-  }
-
-  void _showSyncCompletedMessage() {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.cloud_done, color: Colors.white),
-              const SizedBox(width: 8),
-              const Text('¡Datos sincronizados exitosamente!'),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 3),
-        ),
-      );
-    }
-  }
-
-  void _showReconnectedMessage() {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.wifi, color: Colors.white),
-              const SizedBox(width: 8),
-              const Text('Conexión restablecida. Sincronizando datos...'),
-            ],
-          ),
-          backgroundColor: Colors.blue,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
